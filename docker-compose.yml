@@ -1,0 +1,36 @@
+
+services:
+  mysqldb:
+    container_name: dados-coletados-mysql
+    image: mysql:8.4.6
+
+    environment:
+      MYSQL_DATABASE: dados_coletados
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-senha_local}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./.data/mysql-data8:/var/lib/mysql
+      -
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD:-senha_local}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: api-dado-coletado
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://mysql:3306/dados_coletados
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-senha_local}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
